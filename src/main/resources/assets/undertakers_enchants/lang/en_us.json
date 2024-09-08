@@ -27,5 +27,8 @@
   "enchantment.undertakers_enchants.sudden_impact": "Sudden Impact",
   "enchantment.undertakers_enchants.sudden_impact.desc": "Increase damage again mobs with full hp by 20% for each level.",
   "enchantment.undertakers_enchants.traveller": "Traveller",
-  "enchantment.undertakers_enchants.traveller.desc": "Increased walk speed, at level 3 you can step at 1 block higher."
+  "enchantment.undertakers_enchants.traveller.desc": "Increased walk speed, at level 3 you can step at 1 block higher.",
+ "enchantment.undertakers_enchants.paradoxical_unbreaking": "Paradoxical Unbreaking",
+  "enchantment.undertakers_enchants.paradoxical_unbreaking.desc": "Makes item unbreakable, but vanishes on death and cannot \nbe enchanted with Fortune or Silk Touch",
+  "message.paradoxical_item_player_death": "And once again, the world is a little less paradoxical. Pity..."
 }

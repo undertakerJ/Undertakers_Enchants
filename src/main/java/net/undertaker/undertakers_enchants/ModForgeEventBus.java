@@ -1,9 +1,12 @@
 package net.undertaker.undertakers_enchants;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -24,8 +27,13 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.undertaker.undertakers_enchants.enchantments.ModEnchantments;
@@ -40,7 +48,6 @@ public class ModForgeEventBus {
   @SubscribeEvent
   public static void playerTickEvent1(TickEvent.PlayerTickEvent playerTickEvent) {
     if (playerTickEvent.phase == TickEvent.Phase.END) {
-
       Player player = playerTickEvent.player;
       ItemStack boots = player.getInventory().getArmor(0);
       Map<Enchantment, Integer> enchantments = boots.getAllEnchantments();
@@ -70,7 +77,7 @@ public class ModForgeEventBus {
       } else {
         AttributeModifier existingModifier = stepHeight.getModifier(stepHeightId);
         if (existingModifier != null) {
-          stepHeight.removeModifier(existingModifier);
+          stepHeight.removeModifier(stepHeightId);
         }
       }
 
@@ -301,14 +308,14 @@ public class ModForgeEventBus {
       int enchantmentLevel = enchantments.getOrDefault(ModEnchantments.BERSERK.get(), 0);
       boolean hasEnchantment = enchantmentLevel > 0;
       if (!player.level().isClientSide() && player.tickCount % 80 == 0) {
-        if (hasEnchantment && player.getHealth() <= player.getMaxHealth()*0.25) {
+        if (hasEnchantment && player.getHealth() <= player.getMaxHealth() * 0.25) {
           player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20 * 5, 1));
           player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 5, 1));
           player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 5, 1));
-        } else if (hasEnchantment && player.getHealth() <= player.getMaxHealth()*0.5) {
+        } else if (hasEnchantment && player.getHealth() <= player.getMaxHealth() * 0.5) {
           player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20 * 5, 1));
           player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 5, 0));
-        } else if (hasEnchantment && player.getHealth() <= player.getMaxHealth()*0.75) {
+        } else if (hasEnchantment && player.getHealth() <= player.getMaxHealth() * 0.75) {
           player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20 * 5, 0));
         }
       }
@@ -407,8 +414,7 @@ public class ModForgeEventBus {
         List<Entity> entities =
             level.getEntities(player, box, e -> e instanceof LivingEntity && e != livingEntity);
         entities.sort(Comparator.comparingDouble(e -> e.distanceToSqr(start)));
-        int maxTargets =
-            Math.min(entities.size(), enchantmentLevel);
+        int maxTargets = Math.min(entities.size(), enchantmentLevel);
         for (int i = 0; i < maxTargets; i++) {
           LivingEntity nextTarget = (LivingEntity) entities.get(i);
           if (nextTarget != null) {
@@ -432,16 +438,16 @@ public class ModForgeEventBus {
         Map<Enchantment, Integer> enchantments = tool.getAllEnchantments();
         int enchantmentLevel = enchantments.getOrDefault(ModEnchantments.LONG_HANDED.get(), 0);
         AttributeInstance blockReach =
-                player.getAttributes().getInstance(ForgeMod.BLOCK_REACH.get());
+            player.getAttributes().getInstance(ForgeMod.BLOCK_REACH.get());
         UUID blockReachId = UUID.fromString("24f067fb-9a7f-41ee-85a1-350acee46540");
         boolean hasEnchantment = enchantmentLevel > 0;
         AttributeModifier oldModifier = blockReach.getModifier(blockReachId);
         AttributeModifier newModifier =
-                new AttributeModifier(
-                        blockReachId,
-                        "undertakers_enchants.block_reach",
-                        enchantmentLevel,
-                        AttributeModifier.Operation.ADDITION);
+            new AttributeModifier(
+                blockReachId,
+                "undertakers_enchants.block_reach",
+                enchantmentLevel,
+                AttributeModifier.Operation.ADDITION);
 
         if (hasEnchantment && oldModifier == null) {
           blockReach.addTransientModifier(newModifier);
@@ -450,6 +456,42 @@ public class ModForgeEventBus {
         } else if (hasEnchantment && newModifier.getAmount() != oldModifier.getAmount()) {
           blockReach.removeModifier(blockReachId);
           blockReach.addTransientModifier(newModifier);
+        }
+      }
+    }
+  }
+
+  @SubscribeEvent
+  public static void blockBreakEvent(TickEvent.PlayerTickEvent event) {
+    if (event.phase == TickEvent.Phase.END) {
+      if (!event.player.level().isClientSide()) {
+        ItemStack tool = event.player.getMainHandItem();
+        Map<Enchantment, Integer> enchantments = tool.getAllEnchantments();
+        int enchantmentLevel =
+            enchantments.getOrDefault(ModEnchantments.PARADOXICAL_UNBREAKING.get(), 0);
+        boolean hasEnchantment = enchantmentLevel > 0;
+        CompoundTag tag = tool.getOrCreateTag();
+        if (hasEnchantment && !tag.contains("Unbreakable", Tag.TAG_BYTE)) {
+          tag.putBoolean("Unbreakable", true);
+          tool.setTag(tag);
+        }
+      }
+    }
+  }
+  @SubscribeEvent
+  public static void onPlayerDeathEvent(LivingDeathEvent event){
+    if(!event.getEntity().level().isClientSide()){
+      if (  event.getEntity() instanceof Player player){
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+          ItemStack itemStack = player.getInventory().getItem(i);
+          Map<Enchantment, Integer> enchantments = itemStack.getAllEnchantments();
+          int enchantmentLevel =
+                  enchantments.getOrDefault(ModEnchantments.PARADOXICAL_UNBREAKING.get(), 0);
+          boolean hasEnchantment = enchantmentLevel > 0;
+          if(hasEnchantment){
+            player.getInventory().removeItem(itemStack);
+            player.sendSystemMessage(Component.translatable("message.paradoxical_item_player_death").withStyle(ChatFormatting.AQUA));
+          }
         }
       }
     }

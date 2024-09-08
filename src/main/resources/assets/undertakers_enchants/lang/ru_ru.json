@@ -22,10 +22,13 @@
   "enchantment.undertakers_enchants.magnetic.desc": "Притягивает предметы на земле к игроку.",
   "enchantment.undertakers_enchants.night_vision_enchant": "Ночное Зрение",
   "enchantment.undertakers_enchants.night_vision_enchant.desc": "Дает эффект ночного зрения.",
+  "enchantment.undertakers_enchants.paradoxical_unbreaking": "Парадоксальная Нерушимость",
+  "enchantment.undertakers_enchants.paradoxical_unbreaking.desc": "Делает предмет нерушимым, но он пропадёт при смерти \nи не может быть зачарован Удачей или Шёлковым касанием.",
   "enchantment.undertakers_enchants.press_the_attack": "Решительное Наступление",
   "enchantment.undertakers_enchants.press_the_attack.desc": "Каждое успешное попадание увеличивает урон следующего выстрела.",
   "enchantment.undertakers_enchants.sudden_impact": "Мгновенный Удар",
   "enchantment.undertakers_enchants.sudden_impact.desc": "Увеличивает урон по мобам с полным здоровьем на 20% за каждый уровень.",
   "enchantment.undertakers_enchants.traveller": "Странник",
-  "enchantment.undertakers_enchants.traveller.desc": "Увеличивает скорость ходьбы, на 3 уровне позволяет подниматься на 1 блок выше."
+  "enchantment.undertakers_enchants.traveller.desc": "Увеличивает скорость ходьбы, на 3 уровне позволяет подниматься на 1 блок выше.",
+  "message.paradoxical_item_player_death": "И снова мир стал немного менее парадоксальным. Жаль..."
 }
