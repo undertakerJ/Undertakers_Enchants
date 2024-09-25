@@ -51,7 +51,7 @@ public class ModEnchantments {
       ENCHANTMENTS.register(
           "good_health",
           () ->
-              new GoodHealthEnchantment(
+                  new GoodHealthEnchantment(
                   Enchantment.Rarity.RARE, EnchantmentCategory.ARMOR, ARMOR_SLOTS));
   public static RegistryObject<Enchantment> CRITICAL_DAMAGE =
       ENCHANTMENTS.register(
@@ -139,6 +139,22 @@ public class ModEnchantments {
                   Enchantment.Rarity.VERY_RARE,
                   EnchantmentCategory.DIGGER,
                   EquipmentSlot.MAINHAND));
+  public static RegistryObject<Enchantment> EXCAVATOR =
+      ENCHANTMENTS.register(
+          "excavator",
+          () ->
+              new ExcavatorEnchantment(
+                  Enchantment.Rarity.VERY_RARE,
+                  EnchantmentCategory.DIGGER,
+                  EquipmentSlot.MAINHAND));
+  public static RegistryObject<Enchantment> LAST_STAND =
+      ENCHANTMENTS.register(
+          "last_stand",
+          () ->
+              new LastStandEnchantment(
+                  Enchantment.Rarity.RARE,
+                  EnchantmentCategory.ARMOR,
+                      ARMOR_SLOTS));
 
   public static void register(IEventBus eventBus) {
     ENCHANTMENTS.register(eventBus);
