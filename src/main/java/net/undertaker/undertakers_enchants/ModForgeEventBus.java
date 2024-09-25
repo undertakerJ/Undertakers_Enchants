@@ -678,17 +678,19 @@ public class ModForgeEventBus {
           && !player.isShiftKeyDown()
           && event.getState().getBlock() != Blocks.AIR) {
         breakBlocksInArea(event);
-        mainHandItem.hurtAndBreak(8, player, player1 -> player.broadcastBreakEvent(player.getUsedItemHand()));
+        mainHandItem.hurtAndBreak(
+            8, player, player1 -> player.broadcastBreakEvent(player.getUsedItemHand()));
       }
     }
   }
+
   public static void breakBlocksInArea(BlockEvent.BreakEvent event) {
     Player player = event.getPlayer();
     Vec3 eyePosition = player.getEyePosition();
     Vec3 lookPosition = eyePosition.add(player.getLookAngle().scale(8));
     ClipContext clipContext =
-            new ClipContext(
-                    eyePosition, lookPosition, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+        new ClipContext(
+            eyePosition, lookPosition, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
     BlockHitResult hitResult = player.level().clip(clipContext);
     Direction hitSide = hitResult.getDirection();
     BlockPos pos = event.getPos();
@@ -701,15 +703,15 @@ public class ModForgeEventBus {
           BlockPos targetPos = pos.offset(i, j, k);
           BlockState targetState = player.level().getBlockState(targetPos);
           Block targetBlock = targetState.getBlock();
-          if (targetBlock == Blocks.BEDROCK ||
-                  targetBlock == Blocks.OBSIDIAN ||
-                  targetBlock == Blocks.REINFORCED_DEEPSLATE ||
-                  targetBlock == Blocks.END_GATEWAY ||
-                  targetBlock == Blocks.END_PORTAL ||
-                  targetBlock == Blocks.END_PORTAL_FRAME ||
-                  targetBlock == Blocks.BEACON ||
-                  targetBlock == Blocks.NETHER_PORTAL ||
-                  targetBlock == Blocks.ENCHANTING_TABLE) {
+          if (targetBlock == Blocks.BEDROCK
+              || targetBlock == Blocks.OBSIDIAN
+              || targetBlock == Blocks.REINFORCED_DEEPSLATE
+              || targetBlock == Blocks.END_GATEWAY
+              || targetBlock == Blocks.END_PORTAL
+              || targetBlock == Blocks.END_PORTAL_FRAME
+              || targetBlock == Blocks.BEACON
+              || targetBlock == Blocks.NETHER_PORTAL
+              || targetBlock == Blocks.ENCHANTING_TABLE) {
             return;
           }
         }
@@ -727,7 +729,9 @@ public class ModForgeEventBus {
         break;
     }
   }
-  private static void breakBlocksHorizontally(Player player, BlockPos pos, int radiusX, int radiusZ) {
+
+  private static void breakBlocksHorizontally(
+      Player player, BlockPos pos, int radiusX, int radiusZ) {
     for (int i = -radiusX; i <= radiusX; i++) {
       for (int j = -radiusZ; j <= radiusZ; j++) {
         BlockPos targetPos = pos.offset(i, 0, j);
@@ -735,7 +739,9 @@ public class ModForgeEventBus {
       }
     }
   }
-  private static void breakBlocksVertically(Player player, BlockPos pos, int radiusX, int radiusY, int radiusZ) {
+
+  private static void breakBlocksVertically(
+      Player player, BlockPos pos, int radiusX, int radiusY, int radiusZ) {
     for (int i = -radiusX; i <= radiusX; i++) {
       for (int j = -radiusY; j <= radiusY; j++) {
         for (int k = -radiusZ; k <= radiusZ; k++) {
@@ -745,9 +751,10 @@ public class ModForgeEventBus {
       }
     }
   }
-  //LAST_STAND
+
+  // LAST_STAND
   @SubscribeEvent
-  public static void lastStand(TickEvent.PlayerTickEvent event){
+  public static void lastStand(TickEvent.PlayerTickEvent event) {
     if (event.phase == TickEvent.Phase.END) {
       Player player = event.player;
       Level level = player.level();
@@ -777,17 +784,18 @@ public class ModForgeEventBus {
                 "undertakers_enchants.armor",
                 armorModifier,
                 AttributeModifier.Operation.MULTIPLY_TOTAL);
-
-        if (hasEnchantment && oldModifier == null) {
-          armor.addTransientModifier(newModifier);
-        } else if (!hasEnchantment && oldModifier != null) {
-          armor.removeModifier(armorId);
-        } else if (hasEnchantment && newModifier.getAmount() != oldModifier.getAmount()) {
-          armor.removeModifier(armorId);
-          armor.addTransientModifier(newModifier);
+        if (player.getHealth() <= player.getMaxHealth() * 0.4) {
+          if (hasEnchantment && oldModifier == null) {
+            armor.addTransientModifier(newModifier);
+          } else if (hasEnchantment && newModifier.getAmount() != oldModifier.getAmount()) {
+            armor.removeModifier(armorId);
+            armor.addTransientModifier(newModifier);
+          }
         }
+          if ((!hasEnchantment && oldModifier != null ) || player.getHealth() >= player.getMaxHealth() * 0.4) {
+            armor.removeModifier(armorId);
+          }
       }
     }
   }
-
 }
