@@ -34,9 +34,7 @@ public class ModEnchantments {
           "traveller",
           () ->
               new TravellerEnchantment(
-                  Enchantment.Rarity.RARE,
-                  EnchantmentCategory.ARMOR_FEET,
-                  EquipmentSlot.FEET));
+                  Enchantment.Rarity.RARE, EnchantmentCategory.ARMOR_FEET, EquipmentSlot.FEET));
   public static RegistryObject<Enchantment> MAGNETIC =
       ENCHANTMENTS.register(
           "magnetic",
@@ -66,9 +64,7 @@ public class ModEnchantments {
           "sudden_impact",
           () ->
               new SuddenImpactEnchantment(
-                  Enchantment.Rarity.RARE,
-                  EnchantmentCategory.WEAPON,
-                  EquipmentSlot.MAINHAND));
+                  Enchantment.Rarity.RARE, EnchantmentCategory.WEAPON, EquipmentSlot.MAINHAND));
   public static RegistryObject<Enchantment> LIFE_STEAL =
       ENCHANTMENTS.register(
           "life_steal",
@@ -80,23 +76,21 @@ public class ModEnchantments {
           "night_vision_enchant",
           () ->
               new NightVisionEnchantment(
-                  Enchantment.Rarity.UNCOMMON,
-                  EnchantmentCategory.ARMOR_HEAD,
-                  EquipmentSlot.HEAD));
+                  Enchantment.Rarity.UNCOMMON, EnchantmentCategory.ARMOR_HEAD, EquipmentSlot.HEAD));
   public static RegistryObject<Enchantment> BERSERK =
       ENCHANTMENTS.register(
           "berserk",
           () ->
               new BerserkEnchantment(
-                  Enchantment.Rarity.RARE,
-                  EnchantmentCategory.ARMOR_CHEST,
-                  EquipmentSlot.CHEST));
+                  Enchantment.Rarity.RARE, EnchantmentCategory.ARMOR_CHEST, EquipmentSlot.CHEST));
   public static RegistryObject<Enchantment> CURSE_OF_GRAVITY =
       ENCHANTMENTS.register(
           "curse_of_gravity",
           () ->
               new CurseOfGravityEnchantment(
-                  Enchantment.Rarity.VERY_RARE, EnchantmentCategory.ARMOR_LEGS, EquipmentSlot.LEGS));
+                  Enchantment.Rarity.VERY_RARE,
+                  EnchantmentCategory.ARMOR_LEGS,
+                  EquipmentSlot.LEGS));
   public static RegistryObject<Enchantment> PRESS_THE_ATTACK =
       ENCHANTMENTS.register(
           "press_the_attack",
@@ -120,7 +114,31 @@ public class ModEnchantments {
           "paradoxical_unbreaking",
           () ->
               new ParadoxicalUnderbreakingEnchantment(
-                  Enchantment.Rarity.VERY_RARE, EnchantmentCategory.DIGGER, EquipmentSlot.MAINHAND));
+                  Enchantment.Rarity.VERY_RARE,
+                  EnchantmentCategory.DIGGER,
+                  EquipmentSlot.MAINHAND));
+  public static RegistryObject<Enchantment> NEGATION_ZONE =
+      ENCHANTMENTS.register(
+          "negation_zone",
+          () ->
+              new NegationZoneEnchantment(
+                  Enchantment.Rarity.VERY_RARE, EnchantmentCategory.ARMOR_LEGS, EquipmentSlot.LEGS));
+  public static RegistryObject<Enchantment> LOOT_ROGUE =
+      ENCHANTMENTS.register(
+          "loot_rogue",
+          () ->
+              new LootRogueEnchantment(
+                  Enchantment.Rarity.VERY_RARE,
+                  EnchantmentCategory.WEAPON,
+                  EquipmentSlot.MAINHAND));
+  public static RegistryObject<Enchantment> BREATH_OF_SVAROG =
+      ENCHANTMENTS.register(
+          "breath_of_svarog",
+          () ->
+              new TheBreatheOfSvarogEnchantment(
+                  Enchantment.Rarity.VERY_RARE,
+                  EnchantmentCategory.DIGGER,
+                  EquipmentSlot.MAINHAND));
 
   public static void register(IEventBus eventBus) {
     ENCHANTMENTS.register(eventBus);

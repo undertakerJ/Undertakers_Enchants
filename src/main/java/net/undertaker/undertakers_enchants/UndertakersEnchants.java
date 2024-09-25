@@ -10,14 +10,10 @@ import net.undertaker.undertakers_enchants.effects.ModEffects;
 import net.undertaker.undertakers_enchants.enchantments.ModEnchantments;
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(UndertakersEnchants.MOD_ID)
 public class UndertakersEnchants
 {
-    // Define mod id in a common place for everything to reference
     public static final String MOD_ID = "undertakers_enchants";
-    // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
     public UndertakersEnchants()
     {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();

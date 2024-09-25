@@ -1,12 +1,17 @@
 package net.undertaker.undertakers_enchants;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -20,19 +25,20 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.SmallFireball;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -461,8 +467,9 @@ public class ModForgeEventBus {
     }
   }
 
+  // PARADOXICAL UNBREAKING
   @SubscribeEvent
-  public static void blockBreakEvent(TickEvent.PlayerTickEvent event) {
+  public static void playerTickEvent9(TickEvent.PlayerTickEvent event) {
     if (event.phase == TickEvent.Phase.END) {
       if (!event.player.level().isClientSide()) {
         ItemStack tool = event.player.getMainHandItem();
@@ -470,30 +477,178 @@ public class ModForgeEventBus {
         int enchantmentLevel =
             enchantments.getOrDefault(ModEnchantments.PARADOXICAL_UNBREAKING.get(), 0);
         boolean hasEnchantment = enchantmentLevel > 0;
-        CompoundTag tag = tool.getOrCreateTag();
-        if (hasEnchantment && !tag.contains("Unbreakable", Tag.TAG_BYTE)) {
-          tag.putBoolean("Unbreakable", true);
-          tool.setTag(tag);
-        }
-      }
-    }
-  }
-  @SubscribeEvent
-  public static void onPlayerDeathEvent(LivingDeathEvent event){
-    if(!event.getEntity().level().isClientSide()){
-      if (  event.getEntity() instanceof Player player){
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-          ItemStack itemStack = player.getInventory().getItem(i);
-          Map<Enchantment, Integer> enchantments = itemStack.getAllEnchantments();
-          int enchantmentLevel =
-                  enchantments.getOrDefault(ModEnchantments.PARADOXICAL_UNBREAKING.get(), 0);
-          boolean hasEnchantment = enchantmentLevel > 0;
-          if(hasEnchantment){
-            player.getInventory().removeItem(itemStack);
-            player.sendSystemMessage(Component.translatable("message.paradoxical_item_player_death").withStyle(ChatFormatting.AQUA));
+        if (hasEnchantment) {
+          CompoundTag tag = tool.getOrCreateTag();
+          if (!tag.contains("Unbreakable", Tag.TAG_BYTE)) {
+            tag.putBoolean("Unbreakable", true);
+            tool.setTag(tag);
           }
         }
       }
     }
+  }
+
+  @SubscribeEvent
+  public static void onPlayerDeathEvent(LivingDeathEvent event) {
+    if (!event.getEntity().level().isClientSide()) {
+      if (event.getEntity() instanceof Player player) {
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+          ItemStack itemStack = player.getInventory().getItem(i);
+          Map<Enchantment, Integer> enchantments = itemStack.getAllEnchantments();
+          int enchantmentLevel =
+              enchantments.getOrDefault(ModEnchantments.PARADOXICAL_UNBREAKING.get(), 0);
+          boolean hasEnchantment = enchantmentLevel > 0;
+          if (hasEnchantment) {
+            player.getInventory().removeItem(itemStack);
+            player.sendSystemMessage(
+                Component.translatable("message.paradoxical_item_player_death")
+                    .withStyle(ChatFormatting.AQUA));
+          }
+        }
+      }
+    }
+  }
+
+  // NEGATION ZONE
+  @SubscribeEvent
+  public static void onLevelTick(TickEvent.LevelTickEvent event) {
+    if (event.phase == TickEvent.Phase.END && !event.level.isClientSide()) {
+      ServerLevel level = (ServerLevel) event.level;
+      for (Player player : level.players()) {
+        ItemStack legs = player.getInventory().getArmor(1);
+        Map<Enchantment, Integer> enchantments = legs.getAllEnchantments();
+        int enchantmentLevel = enchantments.getOrDefault(ModEnchantments.NEGATION_ZONE.get(), 0);
+        AABB zone = new AABB(player.blockPosition()).inflate(3);
+        List<Projectile> projectiles = level.getEntitiesOfClass(Projectile.class, zone);
+        if (enchantmentLevel > 0) {
+          for (Projectile projectile : projectiles) {
+            if (projectile.getOwner() != player && zone.contains(projectile.position())) {
+              if (projectile instanceof SmallFireball) {
+                projectile.discard();
+              }
+              projectile.setDeltaMovement(0, 0, 0);
+              projectile.hasImpulse = true;
+              projectile.setNoGravity(true);
+              projectile.setTicksFrozen(20);
+            } else {
+              projectile.setTicksFrozen(0);
+              projectile.setNoGravity(false);
+              projectile.hasImpulse = true;
+            }
+          }
+        } else {
+          for (Projectile projectile : projectiles) {
+            if (projectile.getTicksFrozen() > 0) {
+              projectile.setTicksFrozen(0);
+              projectile.setNoGravity(false);
+              projectile.hasImpulse = true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // LOOT ROGUE
+  private static final Map<UUID, Player> LAST_ATTACKERS = new HashMap<>();
+
+  public static void setLastAttacker(LivingEntity entity, Player player) {
+    clearLastAttacker(entity);
+    LAST_ATTACKERS.put(entity.getUUID(), player);
+  }
+
+  public static Player getLastAttacker(LivingEntity entity) {
+    return LAST_ATTACKERS.get(entity.getUUID());
+  }
+
+  public static void clearLastAttacker(LivingEntity entity) {
+    LAST_ATTACKERS.remove(entity.getUUID());
+  }
+
+  @SubscribeEvent
+  public static void onEntityAttack(LivingAttackEvent event) {
+    if (event.getSource().getEntity() instanceof Player) {
+      Player player = (Player) event.getSource().getEntity();
+      setLastAttacker(event.getEntity(), player);
+    }
+  }
+
+  @SubscribeEvent
+  public static void onMobLootDrop(LivingDropsEvent event) {
+    Level level = event.getEntity().level();
+    Player player = getLastAttacker(event.getEntity());
+    if (!level.isClientSide() && player != null) {
+      ItemStack weapon = player.getMainHandItem();
+      Map<Enchantment, Integer> enchantments = weapon.getAllEnchantments();
+      int enchantmentLevel = enchantments.getOrDefault(ModEnchantments.LOOT_ROGUE.get(), 0);
+      boolean hasEnchantment = enchantmentLevel > 0;
+      if (hasEnchantment && RandomSource.create().nextFloat() <= 0.11f * enchantmentLevel) {
+        List<ItemEntity> originalDrops = (List<ItemEntity>) event.getDrops();
+        List<ItemEntity> doubledDrops = new ArrayList<>();
+        doubledDrops.addAll(originalDrops);
+        for (ItemEntity drop : originalDrops) {
+          ItemStack stack = drop.getItem();
+          ItemStack doubledStack = stack.copy(); // Копируем предмет
+          doubledDrops.add(
+              new ItemEntity(level, drop.getX(), drop.getY(), drop.getZ(), doubledStack));
+        }
+        event.getDrops().clear();
+        event.getDrops().addAll(doubledDrops);
+      }
+    }
+  }
+
+  // SVAROG
+  private static final Map<UUID, BlockPos> playerBlockBreaks = new HashMap<>();
+  @SubscribeEvent
+  public static void onBlockBreak(BlockEvent.BreakEvent event) {
+    Player player = event.getPlayer();
+    if (player instanceof ServerPlayer) {
+      playerBlockBreaks.put(player.getUUID(), event.getPos());
+    }
+  }
+  @SubscribeEvent
+  public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+    if (event.getEntity() instanceof ItemEntity itemEntity && event.getLevel() instanceof ServerLevel level) {
+      playerBlockBreaks.forEach(
+          (playerUUID, blockPos) -> {
+            if (itemEntity
+                .position()
+                .closerThan(new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()), 2.0)) {
+              ServerPlayer player = (ServerPlayer) level.getPlayerByUUID(playerUUID);
+              if (player != null) {
+                ItemStack mainHandItem = player.getMainHandItem();
+                if (mainHandItem.isEnchanted()
+                    && mainHandItem.getEnchantmentLevel(ModEnchantments.BREATH_OF_SVAROG.get()) > 0) {
+                  ItemStack originalItem = itemEntity.getItem();
+                  ItemStack smeltedItem = run(originalItem, level);
+                  if (!ItemStack.matches(originalItem, smeltedItem)) {
+                    itemEntity.setItem(smeltedItem);
+                  }
+                }
+              }
+            }
+          });
+    }
+  }
+  private static ItemStack run(ItemStack unSmelt, Level level) {
+    if (!unSmelt.isEmpty() && !level.isClientSide()) {
+      Optional<SmeltingRecipe> optional = level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SimpleContainer(unSmelt), level);
+      if (optional.isPresent()) {
+        RegistryAccess registryAccess = level.registryAccess();
+        ItemStack resultItem = optional.get().getResultItem(registryAccess);
+        if (!resultItem.isEmpty()) {
+          ItemStack smeltedItem = resultItem.copy();
+          smeltedItem.setCount(unSmelt.getCount() * resultItem.getCount());
+
+          if (RandomSource.create().nextFloat() < 0.05f) {
+            smeltedItem.setCount(smeltedItem.getCount() * 2);
+          }
+
+          return smeltedItem;
+        }
+      }
+    }
+    return unSmelt;
   }
 }
