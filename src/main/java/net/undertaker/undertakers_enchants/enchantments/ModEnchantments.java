@@ -155,6 +155,13 @@ public class ModEnchantments {
                   Enchantment.Rarity.RARE,
                   EnchantmentCategory.ARMOR,
                       ARMOR_SLOTS));
+  public static RegistryObject<Enchantment> MOMENTUM =
+      ENCHANTMENTS.register(
+          "momentum",
+          () ->
+              new MomentumEnchantment(
+                  Enchantment.Rarity.VERY_RARE, EnchantmentCategory.WEAPON,
+                      EquipmentSlot.MAINHAND));
 
   public static void register(IEventBus eventBus) {
     ENCHANTMENTS.register(eventBus);

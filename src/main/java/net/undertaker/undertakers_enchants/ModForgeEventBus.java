@@ -1,6 +1,8 @@
 package net.undertaker.undertakers_enchants;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.Input;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -19,6 +21,7 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -32,6 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -685,48 +689,50 @@ public class ModForgeEventBus {
   }
 
   public static void breakBlocksInArea(BlockEvent.BreakEvent event) {
-    Player player = event.getPlayer();
-    Vec3 eyePosition = player.getEyePosition();
-    Vec3 lookPosition = eyePosition.add(player.getLookAngle().scale(8));
-    ClipContext clipContext =
-        new ClipContext(
-            eyePosition, lookPosition, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
-    BlockHitResult hitResult = player.level().clip(clipContext);
-    Direction hitSide = hitResult.getDirection();
-    BlockPos pos = event.getPos();
-    int radiusX = 1;
-    int radiusY = 1;
-    int radiusZ = 1;
-    for (int i = -radiusX; i <= radiusX; i++) {
-      for (int j = -radiusY; j <= radiusY; j++) {
-        for (int k = -radiusZ; k <= radiusZ; k++) {
-          BlockPos targetPos = pos.offset(i, j, k);
-          BlockState targetState = player.level().getBlockState(targetPos);
-          Block targetBlock = targetState.getBlock();
-          if (targetBlock == Blocks.BEDROCK
-              || targetBlock == Blocks.OBSIDIAN
-              || targetBlock == Blocks.REINFORCED_DEEPSLATE
-              || targetBlock == Blocks.END_GATEWAY
-              || targetBlock == Blocks.END_PORTAL
-              || targetBlock == Blocks.END_PORTAL_FRAME
-              || targetBlock == Blocks.BEACON
-              || targetBlock == Blocks.NETHER_PORTAL
-              || targetBlock == Blocks.ENCHANTING_TABLE) {
-            return;
+    if (!event.getLevel().isClientSide()) {
+      Player player = event.getPlayer();
+      Vec3 eyePosition = player.getEyePosition();
+      Vec3 lookPosition = eyePosition.add(player.getLookAngle().scale(8));
+      ClipContext clipContext =
+          new ClipContext(
+              eyePosition, lookPosition, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+      BlockHitResult hitResult = player.level().clip(clipContext);
+      Direction hitSide = hitResult.getDirection();
+      BlockPos pos = event.getPos();
+      int radiusX = 1;
+      int radiusY = 1;
+      int radiusZ = 1;
+      for (int i = -radiusX; i <= radiusX; i++) {
+        for (int j = -radiusY; j <= radiusY; j++) {
+          for (int k = -radiusZ; k <= radiusZ; k++) {
+            BlockPos targetPos = pos.offset(i, j, k);
+            BlockState targetState = player.level().getBlockState(targetPos);
+            Block targetBlock = targetState.getBlock();
+            if (targetBlock == Blocks.BEDROCK
+                || targetBlock == Blocks.OBSIDIAN
+                || targetBlock == Blocks.REINFORCED_DEEPSLATE
+                || targetBlock == Blocks.END_GATEWAY
+                || targetBlock == Blocks.END_PORTAL
+                || targetBlock == Blocks.END_PORTAL_FRAME
+                || targetBlock == Blocks.BEACON
+                || targetBlock == Blocks.NETHER_PORTAL
+                || targetBlock == Blocks.ENCHANTING_TABLE) {
+              return;
+            }
           }
         }
       }
-    }
-    switch (hitSide.getAxis()) {
-      case X:
-        breakBlocksVertically(event.getPlayer(), pos, 0, radiusY, radiusZ);
-        break;
-      case Y:
-        breakBlocksHorizontally(event.getPlayer(), pos, radiusX, radiusZ);
-        break;
-      case Z:
-        breakBlocksVertically(event.getPlayer(), pos, radiusX, radiusY, 0);
-        break;
+      switch (hitSide.getAxis()) {
+        case X:
+          breakBlocksVertically(event.getPlayer(), pos, 0, radiusY, radiusZ);
+          break;
+        case Y:
+          breakBlocksHorizontally(event.getPlayer(), pos, radiusX, radiusZ);
+          break;
+        case Z:
+          breakBlocksVertically(event.getPlayer(), pos, radiusX, radiusY, 0);
+          break;
+      }
     }
   }
 
@@ -798,4 +804,34 @@ public class ModForgeEventBus {
       }
     }
   }
+  //MOMENTUM
+  @SubscribeEvent
+  public static void momentum(LivingDamageEvent event){
+    Entity source = event.getSource().getDirectEntity();
+    if (source instanceof Player player) {
+      LivingEntity livingEntity = event.getEntity();
+      Level level = livingEntity.level();
+      ItemStack sword = player.getMainHandItem();
+      Map<Enchantment, Integer> enchantments = sword.getAllEnchantments();
+      int enchantmentLevel = enchantments.getOrDefault(ModEnchantments.MOMENTUM.get(), 0);
+      boolean hasEnchantment = enchantmentLevel > 0;
+      if (!level.isClientSide() && hasEnchantment) {
+        CompoundTag tag = livingEntity.getPersistentData();
+        String key = "momentumAttackHits";
+        int hits = tag.getInt(key);
+        hits++;
+        tag.putInt(key, hits);
+
+        float baseDamage = event.getAmount();
+        float growthRate = 0.075f;
+        float additionalDamage = 1 + ((growthRate * enchantmentLevel) * hits);
+
+        float newDamage = baseDamage * additionalDamage;
+        event.setAmount(newDamage);
+        livingEntity.addAdditionalSaveData(tag);
+
+      }
+    }
+  }
+
 }

@@ -18,6 +18,8 @@
   "enchantment.undertakers_enchants.life_steal.desc": "Healing after each attack based on level and damage.",
   "enchantment.undertakers_enchants.long_handed": "Extended Reach",
   "enchantment.undertakers_enchants.long_handed.desc": "Increased Block Reach by 1 each level.",
+  "enchantment.undertakers_enchants.momentum": "Momentum",
+  "enchantment.undertakers_enchants.momentum.desc": "Each attack on mob, increases the next attack's damage",
   "enchantment.undertakers_enchants.loot_rogue": "Loot Rogue",
   "enchantment.undertakers_enchants.loot_rogue.desc": "Double the mob loot drop with chance 11%/22%/33% based on level of enchantment.",
   "enchantment.undertakers_enchants.excavator": "Excavator",
